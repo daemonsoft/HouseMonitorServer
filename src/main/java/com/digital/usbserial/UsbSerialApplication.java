@@ -45,7 +45,6 @@ public class UsbSerialApplication {
         db.collection("devices");
 
 
-
         SpringApplication.run(UsbSerialApplication.class, args);
 
         String[] portNames = SerialPortList.getPortNames();
@@ -87,7 +86,15 @@ public class UsbSerialApplication {
                     }
                     for (Device device : devices) {
                         try {
-                            serialPort.writeString("D1");
+
+                            if (device.getId().equals("livingroomligth"))
+                                if (device.getStatus()==0)
+                                    serialPort.writeString("210");
+                                else
+                                    serialPort.writeString("211");
+
+                            else if (device.getId().equals("maindoor"))
+                                serialPort.writeString("11");
                         } catch (SerialPortException e1) {
                             e1.printStackTrace();
                         }
