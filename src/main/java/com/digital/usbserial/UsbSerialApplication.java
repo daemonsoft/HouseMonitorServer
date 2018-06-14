@@ -34,6 +34,8 @@ public class UsbSerialApplication {
 
     public static void main(String[] args) throws IOException {
 
+        String uuid = "ufeLO5ycZvPbtXuG4jmEeow7cBV2"; //identificador de usuario de firebase
+
         // [START fs_initialize_project_id]
         FirestoreOptions firestoreOptions =
                 FirestoreOptions.getDefaultInstance().toBuilder()
@@ -44,7 +46,7 @@ public class UsbSerialApplication {
 
         db.collection("devices");
 
-
+        List<Device> devices = new ArrayList<>();
         SpringApplication.run(UsbSerialApplication.class, args);
 
         String[] portNames = SerialPortList.getPortNames();
@@ -55,7 +57,7 @@ public class UsbSerialApplication {
             System.out.println(portNames[i]);
         }
         SerialPort serialPort = new SerialPort("/dev/ttyACM0");// ttyUSB0  ttyACM0
-        serialConnection = new SerialConnection(serialPort);
+        serialConnection = new SerialConnection(serialPort,db);
 
         try {
             serialPort.openPort();//Open serial port
@@ -66,47 +68,108 @@ public class UsbSerialApplication {
             //serialPort.setEventsMask(mask);//Set mask
             serialPort.addEventListener(serialConnection);//Add SerialPortEventListener
 
-            db.collection("devices").addSnapshotListener(new EventListener<QuerySnapshot>() {
-                @Override
-                public void onEvent(@Nullable QuerySnapshot value,
-                                    @Nullable FirestoreException e) {
-                    if (e != null) {
-                        System.err.println("Listen failed:" + e);
-                        return;
-                    }
-
-                    List<Device> devices = new ArrayList<>();
-                    Device deviceFireStore;
-                    for (QueryDocumentSnapshot doc : value) {
-                        if (doc.get("name") != null) {
-                            deviceFireStore = doc.toObject(Device.class);
-                            deviceFireStore.setId(doc.getId());
-                            devices.add(deviceFireStore);
-                        }
-                    }
-                    for (Device device : devices) {
-                        try {
-                            System.out.println(device.getId());
-                            if (device.getId().equals("livingroomligth")) {
-                                if (device.getStatus() == 0)
-                                    serialPort.writeString("210");
-                                else
-                                    serialPort.writeString("211");
-
-                            }else if (device.getId().equals("maindoor"))
-                                serialPort.writeString("11");
-                        } catch (SerialPortException e1) {
-                            e1.printStackTrace();
-                        }
-                        System.out.println("device " + device.getName() + device.getStatus());
-                        //Log.d(TAG, "Current cites in CA: " + device.getId());
-                        //if ("maindoor".equals(device.getId())) {
-                        //    mainDoorButton.setChecked(0 != device.getStatus());
-                        // } else if ("livingroomligth".equals(device.getId())) {
-                        //     livingRoomSwitch.setChecked(0 != device.getStatus());
-                        //}
-                    }
+            db.collection(uuid +"/house/devices").document("maindoor").addSnapshotListener((value, e) -> {
+                if (e != null) {
+                    System.err.println("Listen failed:" + e);
+                    return;
                 }
+
+
+                Device deviceFireStore;
+
+
+                deviceFireStore = value.toObject(Device.class);
+                deviceFireStore.setId(value.getId());
+                devices.add(deviceFireStore);
+
+
+                //System.out.println("device " + value.get("name") + value.get("status"));
+
+                try {
+                    //System.out.println(device.getId());
+                    if (deviceFireStore.getId().equals("maindoor")) {
+                        if (deviceFireStore.getStatus() == 0)
+                            serialPort.writeString("{10}");
+                        else
+                            serialPort.writeString("{11}");
+
+                    }
+                } catch (SerialPortException e1) {
+                    e1.printStackTrace();
+                }
+            });
+            db.collection(uuid +"/house/devices").document("livingroomligth").addSnapshotListener((value, e) -> {
+
+                if (e != null) {
+                    System.err.println("Listen failed:" + e);
+                    return;
+                }
+
+
+                Device deviceFireStore;
+                deviceFireStore = value.toObject(Device.class);
+                deviceFireStore.setId(value.getId());
+                devices.add(deviceFireStore);
+                //System.out.println("device " + value.get("name") + value.get("status"));
+                try {
+                    //System.out.println(device.getId());
+                    if (deviceFireStore.getId().equals("livingroomligth")) {
+                        if (deviceFireStore.getStatus() == 0)
+                            serialPort.writeString("{210}");
+                        else
+                            serialPort.writeString("{211}");
+
+                    }
+                } catch (SerialPortException e1) {
+                    e1.printStackTrace();
+                }
+
+
+                //System.out.println("device " + device.getName() + device.getStatus());
+                //Log.d(TAG, "Current cites in CA: " + device.getId());
+                //if ("maindoor".equals(device.getId())) {
+                //    mainDoorButton.setChecked(0 != device.getStatus());
+                // } else if ("livingroomligth".equals(device.getId())) {
+                //     livingRoomSwitch.setChecked(0 != device.getStatus());
+                //}
+
+            });
+
+            db.collection(uuid +"/house/devices").document("mainroomligth").addSnapshotListener((value, e) -> {
+
+                if (e != null) {
+                    System.err.println("Listen failed:" + e);
+                    return;
+                }
+
+
+                Device deviceFireStore;
+                deviceFireStore = value.toObject(Device.class);
+                deviceFireStore.setId(value.getId());
+                devices.add(deviceFireStore);
+                //System.out.println("device " + value.get("name") + value.get("status"));
+                try {
+                    //System.out.println(device.getId());
+                    if (deviceFireStore.getId().equals("mainroomligth")) {
+                        if (deviceFireStore.getStatus() == 0)
+                            serialPort.writeString("{220}");
+                        else
+                            serialPort.writeString("{221}");
+
+                    }
+                } catch (SerialPortException e1) {
+                    e1.printStackTrace();
+                }
+
+
+                //System.out.println("device " + device.getName() + device.getStatus());
+                //Log.d(TAG, "Current cites in CA: " + device.getId());
+                //if ("maindoor".equals(device.getId())) {
+                //    mainDoorButton.setChecked(0 != device.getStatus());
+                // } else if ("livingroomligth".equals(device.getId())) {
+                //     livingRoomSwitch.setChecked(0 != device.getStatus());
+                //}
+
             });
 
 
